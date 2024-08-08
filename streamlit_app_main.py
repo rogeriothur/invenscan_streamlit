@@ -1,4 +1,3 @@
-# Importação de bibliotecas necessárias
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -36,15 +35,16 @@ def get_similar_sentences(input_sentence, model, embeddings_d_norm, df_sentences
     cosine_similarities = np.dot(embeddings_d_norm, sentence_embedding_norm)
     top_indices = np.argsort(cosine_similarities)[-top_k:][::-1]
     top_similarities = cosine_similarities[top_indices]
-    results = [(df_sentences_d[idx], classes_d[idx], top_similarities[i]) for i, idx in enumerate(top_indices)]
+    results = [(df_sentences_d[idx], classes_d[idx], top_similarities[i] * 100) for i, idx in enumerate(top_indices)]
     return results
 
 # Função principal que cria a interface do usuário no Streamlit
 def main():
     st.title("Busca de Frases Semelhantes")
 
-    # Interface para entrada de texto
-    user_input = st.text_area("Digite sua ideia:", height=150)
+    # Definição de uma chave para o campo de entrada para manter o estado
+    user_input_key = "user_input"
+    user_input = st.text_area("Digite sua ideia:", value=st.session_state.get(user_input_key, ""), height=150, key=user_input_key)
 
     # Botões para interação
     col1, col2 = st.columns(2)
@@ -58,10 +58,11 @@ def main():
 
                 results = get_similar_sentences(user_input, model, embeddings_d_norm, df_sentences_d, classes_d)
                 for sentence, classe, score in results:
-                    with st.expander(f"Score: {score * 100:.2f}% - Classe: {classe}"):
+                    with st.expander(f"Score: {score:.2f}% - Classe: {classe}"):
                         st.write(sentence)
     with col2:
         if st.button("Limpar"):
+            st.session_state[user_input_key] = ""
             st.rerun()
 
 if __name__ == "__main__":
